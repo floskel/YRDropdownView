@@ -7,7 +7,7 @@
 //
 
 #import "ViewController.h"
-#import "YRDropdownView.h"
+#import "AlertUtilities.h"
 
 @interface ViewController ()
 
@@ -35,25 +35,14 @@
 }
 
 - (IBAction)showInView:(id)sender {
-    [YRDropdownView showDropdownInView:self.view
-                             title:@"No internet connection!"
-                            detail:@"Check your network settings"
-                             image:[UIImage imageNamed:@"dropdown-alert"]
-                          animated:YES
-                         hideAfter:1.2];
+    [AlertUtilities showFailureAlert];
 }
 
 - (IBAction)showInWindow:(id)sender {
-    [YRDropdownView showDropdownInView:self.view.window 
-                               title:@"Warning"
-                              detail:nil
-                                 image:[UIImage imageNamed:@"dropdown-alert"]
-                            animated:NO
-                           hideAfter:2.0];
+    [AlertUtilities showConnectionAlert];
 }
 
 - (IBAction)hide:(id)sender {
-    [YRDropdownView hideDropdownInView:demoView animated:YES];
 }
 - (void)dealloc {
     [demoView release];

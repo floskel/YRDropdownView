@@ -185,7 +185,8 @@ static YRDropdownView *currentDropdown = nil;
         [currentDropdown hideUsingAnimation:[NSNumber numberWithBool:animated]];
     }
     
-    YRDropdownView *dropdown = [[YRDropdownView alloc] initWithFrame:CGRectMake(10, 100, 300, 0)];
+    YRDropdownView *dropdown = [[YRDropdownView alloc] initWithFrame:CGRectMake(10, 0, 300, 0)];
+    dropdown.center = view.center;
     currentDropdown = dropdown;
     dropdown.titleText = title;
     
@@ -199,12 +200,12 @@ static YRDropdownView *currentDropdown = nil;
     
     dropdown.shouldAnimate = animated;
     
-    if ([view isKindOfClass:[UIWindow class]]) {
-        CGRect dropdownFrame = dropdown.frame;
-        CGRect appFrame = [[UIScreen mainScreen] applicationFrame];
-        //dropdownFrame.origin.y = appFrame.origin.y;
-        dropdown.frame = dropdownFrame;
-    }
+//    if ([view isKindOfClass:[UIWindow class]]) {
+//        CGRect dropdownFrame = dropdown.frame;
+//        //CGRect appFrame = [[UIScreen mainScreen] applicationFrame];
+//        //dropdownFrame.origin.y = appFrame.origin.y;
+//        dropdown.frame = dropdownFrame;
+//    }
     
     [view addSubview:dropdown];
     [dropdown show:animated];
@@ -261,16 +262,26 @@ static YRDropdownView *currentDropdown = nil;
 {
     if(animated)
     {
-        self.frame = CGRectMake(self.frame.origin.x, self.frame.origin.y-self.frame.size.height, self.frame.size.width, self.frame.size.height);
+        CGPoint screenCenter;
+        CGRect screenRect = [[UIScreen mainScreen] applicationFrame];
+        
+        screenCenter.x = screenRect.size.width / 2;
+        screenCenter.y = screenRect.size.height / 2;
+        
+        self.center = screenCenter;
+        
+        //self.frame = CGRectMake(self.frame.origin.x, originY, self.frame.size.width, self.frame.size.height);
         self.alpha = 0.02;
         [UIView animateWithDuration:ANIMATION_DURATION
                               delay:0.0
                             options:UIViewAnimationOptionCurveEaseInOut
                          animations:^{
                              self.alpha = 1.0;
-                             self.frame = CGRectMake(self.frame.origin.x,
-                                                     self.frame.origin.y+self.frame.size.height,
-                                                     self.frame.size.width, self.frame.size.height);
+                             
+//                             CGFloat originY = 460/2 - self.frame.size.height/2;
+//                             self.frame = CGRectMake(self.frame.origin.x,
+//                                                     originY,
+//                                                     self.frame.size.width, self.frame.size.height);
                          }
                          completion:^(BOOL finished) {
                              if (finished)
