@@ -71,7 +71,7 @@ typedef void (^YRTapBlock)(void);
                                  image:(UIImage *)image
                               animated:(BOOL)animated
                              hideAfter:(float)delay;
-
+/*
 + (YRDropdownView *)showDropdownInView:(UIView *)view
                                  title:(NSString *)title
                                 detail:(NSString *)detail
@@ -88,7 +88,7 @@ typedef void (^YRTapBlock)(void);
                        titleLabelColor:(UIColor *)titleLabelColor
                       detailLabelColor:(UIColor *)detailLabelColor
                               animated:(BOOL)animated
-                             hideAfter:(float)delay;
+                             hideAfter:(float)delay;*/
 
 + (BOOL)hideDropdownInView:(UIView *)view;
 + (BOOL)hideDropdownInView:(UIView *)view animated:(BOOL)animated;
@@ -97,8 +97,9 @@ typedef void (^YRTapBlock)(void);
 - (void)show:(BOOL)animated;
 - (void)hide:(BOOL)animated;
 
+/*
 -(void)setTapBlock:(YRTapBlock)tapBlock
-         withQueue:(dispatch_queue_t)dispatchQueue;
+         withQueue:(dispatch_queue_t)dispatchQueue;*/
 
 
 @end

@@ -41,6 +41,9 @@
 @synthesize accessoryImage;
 @synthesize onTouch;
 @synthesize shouldAnimate;
+@synthesize detailLabelColor;
+@synthesize titleLabelColor;
+@synthesize tapBlock;
 
 //Using this prevents two alerts to ever appear on the screen at the same time
 //TODO: Queue alerts, if multiple
