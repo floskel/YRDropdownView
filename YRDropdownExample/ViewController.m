@@ -35,21 +35,21 @@
 }
 
 - (IBAction)showInView:(id)sender {
-    [YRDropdownView showDropdownInView:demoView 
-                             title:@"Warning" 
-                            detail:@"Me too! I want to try a really long detail message to see how it handles the line breaks and what not. Here's to hoping it works right the first time!" 
+    [YRDropdownView showDropdownInView:self.view
+                             title:@"No internet connection!"
+                            detail:@"Check your network settings"
                              image:[UIImage imageNamed:@"dropdown-alert"]
                           animated:YES
-                         hideAfter:3];
+                         hideAfter:1.2];
 }
 
 - (IBAction)showInWindow:(id)sender {
     [YRDropdownView showDropdownInView:self.view.window 
-                               title:@"Warning" 
+                               title:@"Warning"
                               detail:nil
-                               image:nil
+                                 image:[UIImage imageNamed:@"dropdown-alert"]
                             animated:NO
-                           hideAfter:0.0];
+                           hideAfter:2.0];
 }
 
 - (IBAction)hide:(id)sender {
