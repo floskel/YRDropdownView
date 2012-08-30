@@ -11,6 +11,7 @@
 
 @interface UILabel (YRDropdownView)
 - (void)sizeToFitFixedWidth:(CGFloat)fixedWidth;
+
 @end
 
 @implementation UILabel (YRDropdownView)
@@ -41,9 +42,9 @@
 @synthesize accessoryImage;
 @synthesize onTouch;
 @synthesize shouldAnimate;
-@synthesize detailLabelColor;
 @synthesize titleLabelColor;
-@synthesize tapBlock;
+@synthesize detailLabelColor;
+@synthesize tapBlock = _tapBlock;
 
 //Using this prevents two alerts to ever appear on the screen at the same time
 //TODO: Queue alerts, if multiple
@@ -127,7 +128,8 @@ static YRDropdownView *currentDropdown = nil;
         self.titleText = nil;
         self.detailText = nil;
         self.minHeight = 44.0f;
-        self.backgroundImage = [UIImage imageNamed:@"bg-yellow.png"];
+        //        self.backgroundImage = [UIImage imageNamed:@"bg-yellow.png"];
+        self.backgroundColor = [UIColor grayColor];
         self.autoresizingMask = UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin | UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin;
         
         titleLabel = [[UILabel alloc] initWithFrame:self.bounds];
@@ -142,6 +144,8 @@ static YRDropdownView *currentDropdown = nil;
         self.opaque = YES;
         
         onTouch = @selector(hide:);
+        
+        _tapQueue = dispatch_get_main_queue();
     }
     return self;
 }
@@ -149,14 +153,15 @@ static YRDropdownView *currentDropdown = nil;
 #pragma mark - Defines
 
 #define HORIZONTAL_PADDING 15.0f
-#define VERTICAL_PADDING 19.0f
+#define VERTICAL_PADDING 15.0f
 #define IMAGE_PADDING 45.0f
-#define TITLE_FONT_SIZE 19.0f
+#define TITLE_FONT_SIZE 16.0f
 #define DETAIL_FONT_SIZE 13.0f
 #define ANIMATION_DURATION 0.3f
 
 #pragma mark - Class methods
 #pragma mark View Methods
+
 + (YRDropdownView *)showDropdownInView:(UIView *)view title:(NSString *)title
 {
     return [YRDropdownView showDropdownInView:view title:title detail:nil];
@@ -184,12 +189,49 @@ static YRDropdownView *currentDropdown = nil;
                               animated:(BOOL)animated
                              hideAfter:(float)delay
 {
+    return [YRDropdownView showDropdownInView:view
+                                        title:title
+                                       detail:detail
+                                        image:image
+                              backgroundImage:[UIImage imageNamed:@"bg-yellow.png"]
+                                     animated:animated
+                                    hideAfter:delay];
+}
+
++ (YRDropdownView *)showDropdownInView:(UIView *)view
+                                 title:(NSString *)title
+                                detail:(NSString *)detail
+                                 image:(UIImage *)image
+                       backgroundImage:(UIImage *)backgroundImage
+                              animated:(BOOL)animated
+                             hideAfter:(float)delay
+{
+    return [YRDropdownView showDropdownInView:view
+                                        title:title
+                                       detail:detail
+                                        image:image
+                              backgroundImage:backgroundImage
+                              titleLabelColor:[UIColor colorWithWhite:0.225 alpha:1.0]
+                             detailLabelColor:[UIColor colorWithWhite:0.225 alpha:1.0]
+                                     animated:animated
+                                    hideAfter:delay];
+}
+
++ (YRDropdownView *)showDropdownInView:(UIView *)view
+                                 title:(NSString *)title
+                                detail:(NSString *)detail
+                                 image:(UIImage *)image
+                       backgroundImage:(UIImage *)backgroundImage
+                       titleLabelColor:(UIColor *)titleLabelColor
+                      detailLabelColor:(UIColor *)detailLabelColor
+                              animated:(BOOL)animated
+                             hideAfter:(float)delay
+{
     if (currentDropdown) {
         [currentDropdown hideUsingAnimation:[NSNumber numberWithBool:animated]];
     }
     
-    YRDropdownView *dropdown = [[YRDropdownView alloc] initWithFrame:CGRectMake(10, 0, 300, 0)];
-    dropdown.center = view.center;
+    YRDropdownView *dropdown = [[YRDropdownView alloc] initWithFrame:CGRectMake(0, view.bounds.origin.y, view.bounds.size.width, 44)];
     currentDropdown = dropdown;
     dropdown.titleText = title;
     
@@ -201,15 +243,29 @@ static YRDropdownView *currentDropdown = nil;
         dropdown.accessoryImage = image;
     }
     
-    dropdown.shouldAnimate = animated;
-    
-//    if ([view isKindOfClass:[UIWindow class]]) {
-//        CGRect dropdownFrame = dropdown.frame;
-//        //CGRect appFrame = [[UIScreen mainScreen] applicationFrame];
-//        //dropdownFrame.origin.y = appFrame.origin.y;
-//        dropdown.frame = dropdownFrame;
+//    if (backgroundImage) {
+//        dropdown.backgroundImage = backgroundImage;
+//    } else {
+//        dropdown.backgroundImage = [UIImage imageNamed:@"bg-yellow.png"];
 //    }
     
+    if (titleLabelColor) {
+        dropdown.titleLabelColor = titleLabelColor;
+    }
+    
+    if (detailLabelColor) {
+        dropdown.detailLabelColor = detailLabelColor;
+    }
+    
+    dropdown.shouldAnimate = animated;
+    
+    if ([view isKindOfClass:[UIWindow class]]) {
+        CGRect dropdownFrame = dropdown.frame;
+        CGRect appFrame = [[UIScreen mainScreen] applicationFrame];
+        dropdownFrame.origin.y = appFrame.origin.y;
+        dropdown.frame = dropdownFrame;
+    }
+    //[dropdown layoutSubviews];
     [view addSubview:dropdown];
     [dropdown show:animated];
     if (delay != 0.0) {
@@ -219,6 +275,7 @@ static YRDropdownView *currentDropdown = nil;
     return dropdown;
 }
 
+
 + (void)removeView
 {
     if (!currentDropdown) {
@@ -227,7 +284,9 @@ static YRDropdownView *currentDropdown = nil;
     
     [currentDropdown removeFromSuperview];
     
+#if !(__has_feature(objc_arc))
     [currentDropdown release];
+#endif
     currentDropdown = nil;
 }
 
@@ -265,26 +324,16 @@ static YRDropdownView *currentDropdown = nil;
 {
     if(animated)
     {
-        CGPoint screenCenter;
-        CGRect screenRect = [[UIScreen mainScreen] applicationFrame];
-        
-        screenCenter.x = screenRect.size.width / 2;
-        screenCenter.y = screenRect.size.height / 2;
-        
-        self.center = screenCenter;
-        
-        //self.frame = CGRectMake(self.frame.origin.x, originY, self.frame.size.width, self.frame.size.height);
-        self.alpha = 0.02;
+        self.frame = CGRectMake(self.frame.origin.x, self.frame.origin.y-self.frame.size.height, self.frame.size.width, self.frame.size.height);
+        //self.alpha = 0.02;
         [UIView animateWithDuration:ANIMATION_DURATION
                               delay:0.0
                             options:UIViewAnimationOptionCurveEaseInOut
                          animations:^{
                              self.alpha = 1.0;
-                             
-//                             CGFloat originY = 460/2 - self.frame.size.height/2;
-//                             self.frame = CGRectMake(self.frame.origin.x,
-//                                                     originY,
-//                                                     self.frame.size.width, self.frame.size.height);
+                             self.frame = CGRectMake(self.frame.origin.x,
+                                                     self.frame.origin.y+self.frame.size.height,
+                                                     self.frame.size.width, self.frame.size.height);
                          }
                          completion:^(BOOL finished) {
                              if (finished)
@@ -307,8 +356,8 @@ static YRDropdownView *currentDropdown = nil;
                               delay:0.0
                             options:UIViewAnimationOptionCurveEaseInOut
                          animations:^{
-                             self.alpha = 0.00;
-                             //self.frame = CGRectMake(self.frame.origin.x, self.frame.origin.y-self.frame.size.height, self.frame.size.width, self.frame.size.height);
+                             //self.alpha = 0.02;
+                             self.frame = CGRectMake(self.frame.origin.x, self.frame.origin.y-self.frame.size.height, self.frame.size.width, self.frame.size.height);
                          }
                          completion:^(BOOL finished) {
                              if (finished)
@@ -330,6 +379,13 @@ static YRDropdownView *currentDropdown = nil;
 
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
 {
+    if(self.tapBlock)
+    {
+        dispatch_async(_tapQueue, ^{
+            self.tapBlock();
+        });
+    }
+    
     [self hideUsingAnimation:[NSNumber numberWithBool:self.shouldAnimate]];
 }
 
@@ -337,52 +393,85 @@ static YRDropdownView *currentDropdown = nil;
 
 - (void)layoutSubviews {
     // Set label properties
-    titleLabel.font = [UIFont boldSystemFontOfSize:TITLE_FONT_SIZE];
+    titleLabel.font = [UIFont fontWithName:TITLE_FONT_NAME size:16.0];
     titleLabel.adjustsFontSizeToFitWidth = NO;
-    titleLabel.opaque = NO;
+    titleLabel.opaque = YES;
     titleLabel.backgroundColor = [UIColor clearColor];
-    titleLabel.textColor = [UIColor colorWithWhite:0.225 alpha:1.0];
-    titleLabel.shadowOffset = CGSizeMake(0, 1/[[UIScreen mainScreen] scale]);
-    titleLabel.shadowColor = [UIColor colorWithWhite:1 alpha:0.25];
-    titleLabel.text = self.titleText;
-    [titleLabel sizeToFitFixedWidth:self.bounds.size.width - (2 * HORIZONTAL_PADDING)];
+    titleLabel.textColor = [UIColor whiteColor];
     
-    titleLabel.frame = CGRectMake(self.bounds.origin.x + HORIZONTAL_PADDING,
-                                  self.bounds.origin.y + VERTICAL_PADDING - 8,
-                                  self.bounds.size.width - (2 * HORIZONTAL_PADDING),
-                                  titleLabel.frame.size.height);
+    CGColorRef color = [titleLabel.textColor CGColor];
+    const CGFloat *components = CGColorGetComponents(color);
+    float total = 0.0;
+    for (int i = 0; i < (int)CGColorGetNumberOfComponents(color)-1; i++){
+        total += components[i];
+    }
+    if ((total/((int)CGColorGetNumberOfComponents(color)-1)) > 0.5){
+        titleLabel.shadowColor = [UIColor colorWithWhite:0 alpha:0.25];
+        titleLabel.shadowOffset = CGSizeMake(0, -1/[[UIScreen mainScreen] scale]);
+    }else {
+        titleLabel.shadowColor = [UIColor colorWithWhite:1 alpha:0.35];
+        titleLabel.shadowOffset = CGSizeMake(0, 1/[[UIScreen mainScreen] scale]);
+    }
+    
+    titleLabel.text = [self.titleText uppercaseString];
+    //[titleLabel sizeToFitFixedWidth:self.bounds.size.width - (2 * HORIZONTAL_PADDING)];
+    [titleLabel sizeToFit];
+    
+//    titleLabel.frame = CGRectMake(self.bounds.origin.x + HORIZONTAL_PADDING,
+//                                  self.bounds.origin.y + VERTICAL_PADDING - 8,
+//                                  self.bounds.size.width - (2 * HORIZONTAL_PADDING),
+//                                  titleLabel.frame.size.height);
+    CGPoint center = self.center;
+    center.y = center.y;
+    titleLabel.center = center;
+
     
     [self addSubview:titleLabel];
-    
-    if (self.detailText) {
+
+    if (self.detailText.length > 0) {
         detailLabel.font = [UIFont systemFontOfSize:DETAIL_FONT_SIZE];
         detailLabel.numberOfLines = 0;
         detailLabel.adjustsFontSizeToFitWidth = NO;
-        detailLabel.opaque = NO;
+        detailLabel.opaque = YES;
         detailLabel.backgroundColor = [UIColor clearColor];
-        detailLabel.textColor = [UIColor colorWithWhite:0.225 alpha:1.0];
-        detailLabel.shadowOffset = CGSizeMake(0, 1/[[UIScreen mainScreen] scale]);
-        detailLabel.shadowColor = [UIColor colorWithWhite:1 alpha:0.25];
+        detailLabel.textColor = detailLabelColor;
+        
+        CGColorRef color = [detailLabel.textColor CGColor];
+        const CGFloat *components = CGColorGetComponents(color);
+        float total = 0.0;
+        for (int i = 0; i < (int)CGColorGetNumberOfComponents(color)-1; i++){
+            total += components[i];
+        }
+        if ((total/((int)CGColorGetNumberOfComponents(color)-1)) > 0.5){
+            detailLabel.shadowColor = [UIColor colorWithWhite:0 alpha:0.25];
+            detailLabel.shadowOffset = CGSizeMake(0, -1/[[UIScreen mainScreen] scale]);
+        }else {
+            detailLabel.shadowColor = [UIColor colorWithWhite:1 alpha:0.35];
+            detailLabel.shadowOffset = CGSizeMake(0, 1/[[UIScreen mainScreen] scale]);
+        }
+        
         detailLabel.text = self.detailText;
         [detailLabel sizeToFitFixedWidth:self.bounds.size.width - (2 * HORIZONTAL_PADDING)];
         
         detailLabel.frame = CGRectMake(self.bounds.origin.x + HORIZONTAL_PADDING,
-                                       titleLabel.frame.origin.y + titleLabel.frame.size.height + 2,
+                                       titleLabel.frame.origin.y + titleLabel.frame.size.height,
                                        self.bounds.size.width - (2 * HORIZONTAL_PADDING),
                                        detailLabel.frame.size.height);
         
         [self addSubview:detailLabel];
     } else {
-        titleLabel.frame = CGRectMake(titleLabel.frame.origin.x,
-                                      9,
-                                      titleLabel.frame.size.width,
-                                      titleLabel.frame.size.height);
+        
+//        titleLabel.frame = CGRectMake(titleLabel.frame.origin.x,
+//                                      9,
+//                                      titleLabel.frame.size.width,
+//                                      titleLabel.frame.size.height);
+        titleLabel.center = self.center;
     }
     
     if (self.accessoryImage) {
         accessoryImageView.image = self.accessoryImage;
         accessoryImageView.frame = CGRectMake(self.bounds.origin.x + HORIZONTAL_PADDING,
-                                              self.bounds.origin.y + 6,
+                                              self.bounds.origin.y + VERTICAL_PADDING,
                                               self.accessoryImage.size.width,
                                               self.accessoryImage.size.height);
         
@@ -398,26 +487,46 @@ static YRDropdownView *currentDropdown = nil;
                                            detailLabel.frame.origin.y,
                                            detailLabel.frame.size.width,
                                            detailLabel.frame.size.height);
-            CGRect imageRect = accessoryImageView.frame;
-            imageRect.origin.y = self.bounds.origin.y + VERTICAL_PADDING;
-            accessoryImageView.frame = imageRect;
         }
         
         [self addSubview:accessoryImageView];
     }
     
     CGFloat dropdownHeight = 44.0f;
-    if (self.detailText) {
-        dropdownHeight = MAX(CGRectGetMaxY(self.bounds), CGRectGetMaxY(detailLabel.frame));
-        dropdownHeight += VERTICAL_PADDING;
-    }
+//    if (self.detailText) {
+//        dropdownHeight = MAX(CGRectGetMaxY(self.bounds), CGRectGetMaxY(detailLabel.frame));
+//        dropdownHeight += VERTICAL_PADDING;
+//    } else {
+//        dropdownHeight = MAX(CGRectGetMaxY(self.bounds), CGRectGetMaxY(titleLabel.frame));
+//        if (dropdownHeight != 44) {
+//            dropdownHeight += VERTICAL_PADDING;
+//        }
+//    }
     
     [self setFrame:CGRectMake(self.frame.origin.x, self.frame.origin.y, self.frame.size.width, dropdownHeight)];
     
+    [backgroundImageView setImage:[backgroundImage stretchableImageWithLeftCapWidth:1 topCapHeight:backgroundImage.size.height/2]];
     [backgroundImageView setFrame:self.bounds];
-    
+}
+
+-(void)setTapBlock:(YRTapBlock)tapBlock
+{
+    [self setTapBlock:tapBlock
+            withQueue:nil];
+}
+
+-(void)setTapBlock:(YRTapBlock)tapBlock
+         withQueue:(dispatch_queue_t)dispatchQueue
+{
+    _tapBlock = [tapBlock copy];
+    if(dispatchQueue)
+    {
+        _tapQueue = dispatchQueue;
+    }
+    else
+    {
+        _tapQueue = dispatch_get_main_queue();
+    }
 }
 
 @end
-
-
